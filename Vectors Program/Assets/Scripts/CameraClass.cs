@@ -14,10 +14,7 @@ public class CameraClass : MonoBehaviour {
     //The position, scale, and rotation of the camera
     private Transform cam;
 
-    //A scalar that controls how fast the camera moves.
-    private float speed = 150f;
-    //How much the radius is changing.
-    private float deltaRadius = 0f;
+    //Used for inputs
     //
     private float xInfluence;
     //
@@ -25,10 +22,15 @@ public class CameraClass : MonoBehaviour {
     //
     private float scrollInfluence;
 
+    //A scalar that controls how fast the camera moves.
+    private float speed = 150f;
+    //How much the radius is changing.
+    private Vector3 deltaRadius;
+
     //Variables to limit how small radius can be
     private Vector3 disp;
     private float dispMag;
-    private float lowBound = 5f;
+    private float lowBound = 3f;
 
     //Getters and Setters (unimplemented)
     //public float getRadius() {
@@ -62,21 +64,20 @@ public class CameraClass : MonoBehaviour {
             cam.position = new Vector3(cam.position.x, cam.position.y + yInfluence * Time.deltaTime * -speed/2, cam.position.z);
 
         } else if(scrollInfluence != 0f) {//If the scrollwheel is being used
-            //Multiply the scrolling input by the frame-drawing time, and the speed comstant
-            deltaRadius = scrollInfluence * Time.deltaTime * speed;
+
             //Get the displacement of the camera from the anchor
             disp = new Vector3(cam.position.x - anchor.position.x, cam.position.y - anchor.position.y, cam.position.z - anchor.position.z);
             
-            //Get the magnitude of the displacement from the anchor
-            dispMag = Mathf.Sqrt(Mathf.Pow(disp.x, 2f) + Mathf.Pow(disp.y, 2f) + Mathf.Pow(disp.z, 2f));
+            //Get the magnitude of the displacement from the anchor, in the horizontal plane
+            dispMag = Mathf.Sqrt(Mathf.Pow(disp.x, 2f) + Mathf.Pow(disp.z, 2f));
 
-            //Camera can move in any way when above low bound. When at low bound it can only go outwards.
-            if (dispMag >= lowBound) {
-                Vector3 camOffset = deltaRadius * -anchor.forward;
-                cam.position = cam.position + camOffset;
-            }else if(deltaRadius > 0f) {
-                Vector3 camOffset = deltaRadius * -anchor.forward;
-                cam.position = cam.position + camOffset;
+            if (dispMag > lowBound || scrollInfluence < 0f) {//If the user is scrolling out or is not too close, change the camera position
+
+                //Multiply the scrolling input by the frame-drawing time, and the speed comstant
+                deltaRadius = scrollInfluence * Time.deltaTime * speed * 3f * anchor.forward;
+
+                //Add the vector based on the zooming to the camera's position vector
+                cam.position = cam.position + deltaRadius;
             }
         }
         //Make the camera's forward axis face the anchor

@@ -1,12 +1,6 @@
 ﻿using UnityEngine;
 public class CameraClass : MonoBehaviour {
 
-
-    /*
-    TO DO
-    Make the low bound based on the XY component rather than XYZ
-    */
-
     //The anchor is an object that the camera is parented to. Transformations of this object affect the transformations of the camera
 
     //The position, scale, and rotation of the anchor
@@ -15,11 +9,11 @@ public class CameraClass : MonoBehaviour {
     private Transform cam;
 
     //Used for inputs
-    //
+    //The effect the horizontal movement of the mouse has on the camera's movement
     private float xInfluence;
-    //
+    //The effect the vertical movement of the mouse has on the camera's movement
     private float yInfluence;
-    //
+    //The effect the scrollwheel movement has on the camera's movement
     private float scrollInfluence;
 
     //A scalar that controls how fast the camera moves.
@@ -27,10 +21,13 @@ public class CameraClass : MonoBehaviour {
     //How much the radius is changing.
     private Vector3 deltaRadius;
 
-    //Variables to limit how small radius can be
+    //Variables to limit / affect scrolling
+    //used to modify scrolling speed based on distance
     private Vector3 disp;
-    private float dispMag;
-    private float lowBound = 3f;
+    private float dispMag2D;
+    private float dispMag3D;
+    //Maximum zoom ~ measured along the XY plane
+    private float lowBound = 5f;
 
     //Getters and Setters (unimplemented)
     //public float getRadius() {
@@ -68,16 +65,25 @@ public class CameraClass : MonoBehaviour {
             //Get the displacement of the camera from the anchor
             disp = new Vector3(cam.position.x - anchor.position.x, cam.position.y - anchor.position.y, cam.position.z - anchor.position.z);
             
-            //Get the magnitude of the displacement from the anchor, in the horizontal plane
-            dispMag = Mathf.Sqrt(Mathf.Pow(disp.x, 2f) + Mathf.Pow(disp.z, 2f));
+            //Get the magnitude of the displacement from the anchor, ***in the horizontal plane***
+            dispMag2D = Mathf.Sqrt(Mathf.Pow(disp.x, 2f) + Mathf.Pow(disp.z, 2f));
 
-            if (dispMag > lowBound || scrollInfluence < 0f) {//If the user is scrolling out or is not too close, change the camera position
+            //Get the magnitude of the displacement from the anchor, ***in three space***
+            dispMag3D = Mathf.Sqrt(Mathf.Pow(disp.x, 2f) + Mathf.Pow(disp.z, 2f) + Mathf.Pow(disp.y, 2f));
 
-                //Multiply the scrolling input by the frame-drawing time, and the speed comstant
-                deltaRadius = scrollInfluence * Time.deltaTime * speed * 3f * anchor.forward;
+            if (dispMag2D > lowBound || scrollInfluence < 0f) {//If the user is scrolling out or is not too close, change the camera position
 
-                //Add the vector based on the zooming to the camera's position vector
-                cam.position = cam.position + deltaRadius;
+                //Multiply the scrolling input by the frame-drawing time, and the speed comstant, multiply that by the unit vector in the camera's facing direction
+                deltaRadius = scrollInfluence * Time.deltaTime * speed * cam.forward;
+
+                //Multiply the camera speed by the distance if it is close, or moving closer from farther away
+                if(dispMag3D < 100f || (dispMag3D >= 100f && scrollInfluence > 0f)) {
+                    deltaRadius *= dispMag3D;
+                }
+
+                //Add the vector based on the zooming to the camera's position vector (interpolates, and moves, to midpoints in order to smoothen motion)
+                cam.position = Vector3.Lerp(cam.position, cam.position + deltaRadius, 0.5f);
+
             }
         }
         //Make the camera's forward axis face the anchor

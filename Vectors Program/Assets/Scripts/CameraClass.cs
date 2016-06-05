@@ -38,7 +38,7 @@ public class CameraClass : MonoBehaviour {
     //}
 
     //Other methods
-    private void turn() {
+    public void turn() {
 
         //Positive if scrolling forward. Negative if scrolling backward. As scrolling speed increases, the influence moves farther from 0.
         scrollInfluence = Input.GetAxis("Mouse ScrollWheel");
@@ -98,7 +98,6 @@ public class CameraClass : MonoBehaviour {
     private void Awake() {//Initialize values
            
         //Find the transformation, scale, and rotation of the camera, and the anchoring objects
-
         //Find object tagged as anchor
         anchor = GameObject.FindGameObjectWithTag("ANCHOR").transform;
         //Find object tagged as camera

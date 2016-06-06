@@ -2,13 +2,14 @@
 
 public class Main : MonoBehaviour {
 
-	// Use this for initialization
-	void Awake () {
 
+    //UNITY DEFINED METHODS
+    //Awake() is called when the scene is created
+    //Update() is called each time a frame is redrawn
+
+    void Awake () {//Initialization when the scene is opened
     }
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+		
+	void Update () {// Update is called once per frame
+    }
 }

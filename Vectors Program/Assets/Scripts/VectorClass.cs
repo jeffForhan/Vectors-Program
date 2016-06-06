@@ -14,7 +14,7 @@ public class VectorClass : MonoBehaviour {
     //True = algebreic. False = geometric.
     private bool type;
     //Holds the vector's magnitude
-    private float mag;
+    private float magni;
 
     //Constructors
     //For 2d
@@ -26,7 +26,7 @@ public class VectorClass : MonoBehaviour {
         components[0] = x;
         components[1] = y;
 
-        mag = magnify(components);
+        magni = magnify(components);
 
     }
     //For 3d
@@ -39,7 +39,7 @@ public class VectorClass : MonoBehaviour {
         components[1] = y;
         components[2] = z;
 
-        mag = magnify(components);
+        magni = magnify(components);
 
     }
     //For 4d
@@ -53,7 +53,7 @@ public class VectorClass : MonoBehaviour {
         components[2] = z;
         components[3] = w;
 
-        mag = magnify(components);
+        magni = magnify(components);
 
     }
     //For geometric
@@ -64,23 +64,30 @@ public class VectorClass : MonoBehaviour {
         //Store the magnitude as the first array element and the direction in the second
         components[0] = mag;
         components[1] = deg;
+
+        magni = components[0];
+
     }
 
     //Gets the magnitude of the vector(DONE)
-    public float magnify(float[] components) {
+    public float magnify(float[] componentsM) {
 
         float magnitude = 0f;
 
-        for(int i = 0; i < components.Length; i++) {
-            magnitude += Mathf.Pow(components[i], 2f);
+        for(int i = 0; i < componentsM.Length; i++) {
+            magnitude += Mathf.Pow(componentsM[i], 2f);
         }
         magnitude = Mathf.Sqrt(magnitude);
 
         return magnitude;
     }
-    //Returns the unit vector
-    public int[] unitify(float[] components, float magnitude) {
-        return null;
+    //Returns the unit vector(DONE)
+    public float[] unitify(float[] componentsU, float magnitude) {
+        float[] unitVector = new float[componentsU.Length];
+        for(int i = 0; i < componentsU.Length; i++) {
+            unitVector[i] = componentsU[i] * (1 / magnitude);
+        }
+        return unitVector;
     }
 
     //algebreic dot (DONE)

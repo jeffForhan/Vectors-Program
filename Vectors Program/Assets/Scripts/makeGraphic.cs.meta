@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 25999ccb981c8864f8b35c0074840b53
+timeCreated: 1465346329
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - vectorModel: {fileID: 141508, guid: 77d829aacfc59194fbd039788aca6a01, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

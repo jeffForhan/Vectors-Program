@@ -3,6 +3,7 @@
 //Split into an inheritence tree for generic vectors that branch into 3D, 2D, and 4D
 public class VectorClass {
 
+    //The model, colliders etc. that the vector representation holds
     public GameObject vectorObj;
 
     //Position on a plane
@@ -12,37 +13,19 @@ public class VectorClass {
 
     //Array holding the vector components
     private float[] components;
-    //True = algebreic. False = geometric.
-    private bool type;
     //Holds the vector's magnitude
     private float magni;
 
-    ////Constructors
-    ////For 2d
-    //public VectorClass(int x, int y) {
-    //    type = true;
-
-    //    //Add vector components to an array
-    //    components = new float[2];
-    //    components[0] = x;
-    //    components[1] = y;
-
-    //    magni = magnify(components);
-
-    //}
-
     //For 3d
     /// <summary>
-    /// Constructor*
+    /// Constructor:
     /// Pre: User has pressed the add vector button in the GUI
     /// Post: Makes a 3 - dimensional position vector, based on x, y, and z components
     /// </summary>
     /// <param name="x">X component</param>
     /// <param name="y">Y component</param>
     /// <param name="z">Z component</param>
-    public VectorClass(int x, int y, int z) {
-        //This is an algebreic vector
-        type = true;
+    public VectorClass(float x, float y, float z) {
 
         //Add vector components to an array
         components = new float[3];
@@ -57,7 +40,7 @@ public class VectorClass {
 
     //For 3d #2
     /// <summary>
-    /// Constructor*
+    /// Constructor:
     /// Pre: User has pressed the add vector button in the GUI
     /// Post: Makes a 3 - dimensional displacement vector, based on x, y, and z components, as well as a displacement from the origin
     /// </summary>
@@ -66,8 +49,6 @@ public class VectorClass {
     /// <param name="z">Z component</param>
     /// <param name="disp">The displacement from the origin</param>
     public VectorClass(int x, int y, int z, Transform disp) {
-        //This is an algebreic vector
-        type = true;
 
         //Add vector components to an array
         components = new float[3];
@@ -80,33 +61,6 @@ public class VectorClass {
 
     }
 
-    ////For 4d
-    //public VectorClass(float x, float y, float z, float w) {
-    //    type = true;
-
-    //    //Add vector components to an array
-    //    components = new float[4];
-    //    components[0] = x;
-    //    components[1] = y;
-    //    components[2] = z;
-    //    components[3] = w;
-
-    //    magni = magnify(components);
-
-    //}
-    ////For geometric
-    //public VectorClass(float mag, float deg) {
-    //    type = false;
-    //    components = new float[2];
-
-    //    //Store the magnitude as the first array element and the direction in the second
-    //    components[0] = mag;
-    //    components[1] = deg;
-
-    //    magni = components[0];
-
-    //}
-
     //Gets the vector components
     public float[] getVectComp() {
         return components;
@@ -117,6 +71,10 @@ public class VectorClass {
         components[0] = x;
         components[1] = y;
         components[2] = z;
+    }
+
+    public float getMagni() {
+        return magni;
     }
 
     //Gets the magnitude of the vector(DONE)
@@ -141,12 +99,12 @@ public class VectorClass {
     }
 
     //algebreic dot (DONE)
-    public float dot(VectorClass v1, VectorClass v2) {
+    public float dot( VectorClass other) {
         float dotVal = 0;
 
         //Multiply respective components of the two vectors input
-        for(int i = 0; i < v1.components.Length; i++) {
-            dotVal += v1.components[i] * v2.components[i];
+        for(int i = 0; i < components.Length; i++) {
+            dotVal += components[i] * other.components[i];
         }
         return dotVal;
     }
@@ -158,6 +116,7 @@ public class VectorClass {
 
     //    return dotVal;
     //}
+
     //algebreic cross (DONE IN JAVA --- TRANSLATE)
     public int[] cross(VectorClass v1, VectorClass v2) {
         return null;
@@ -166,4 +125,18 @@ public class VectorClass {
     //public int[] cross(float magA, float magB, float theta) {
     //    return null;
     //}
+
+    public VectorClass projection(VectorClass vA, VectorClass vB) {
+
+        float scalarMulti = vA.dot(vB) / vB.dot(vB);
+        
+        VectorClass projAonB = vB;
+        projAonB.components[0] *= scalarMulti;
+        projAonB.components[1] *= scalarMulti;
+        projAonB.components[2] *= scalarMulti;
+
+        projAonB.magni = projAonB.magnify();
+
+        return projAonB;
+    }
 }

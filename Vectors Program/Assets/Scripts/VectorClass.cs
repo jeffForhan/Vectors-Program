@@ -3,6 +3,13 @@
 //Split into an inheritence tree for generic vectors that branch into 3D, 2D, and 4D
 public class VectorClass {
 
+    //Number of times vectors have been created
+    public static int totVectors = 0;
+    //Holds all of the vector object structures
+    public static VectorClass[] allVectors = new VectorClass[12];
+    //Holds all of the vector 3D models, components, gameobjects, and controlling empties
+    public static GameObject[] allModels = new GameObject[12];
+
     //The model, colliders etc. that the vector representation holds
     public GameObject vectorObj;
 

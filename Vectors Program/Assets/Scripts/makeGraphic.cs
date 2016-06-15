@@ -5,8 +5,6 @@ using UnityEngine.UI;
 public class makeGraphic : MonoBehaviour {
 
     //WILL NEED TO BE CHANGED WHEN VECTORS CAN BE DELETED
-    //Number of times vectors have been created
-    int i = 0;
 
     //The prefabricated vector object. Contains several 3D graphical components, and controlling invisible components.
     public GameObject vectorModel;
@@ -24,10 +22,9 @@ public class makeGraphic : MonoBehaviour {
     //Displacement of the vector
     private Vector3 position = new Vector3(0f,0f,0f);
 
-    //Holds all of the vector object structures
-    private VectorClass[] allVectors = new VectorClass[12];
-    //Holds all of the vector 3D models, components, gameobjects, and controlling empties
-    private GameObject[] allModels = new GameObject[12];
+    public void makeFromGUI() {
+
+    }
 
     //Called by the GUI. When the make vector button is pressed, a vector is made. It's model is stored in one array, and its class is stored in another one.
     public void make() {
@@ -47,24 +44,26 @@ public class makeGraphic : MonoBehaviour {
             Debug.Log("Invalid Components. All components must be elements of the real numbers.");
         }
 
-        if (i < allModels.Length) {//If there are fewer than 12 vectors
+        if (VectorClass.totVectors < VectorClass.allModels.Length) {//If there are fewer than 12 vectors
             if (xComp == 0 && yComp == 0 && zComp == 0) {
                 Debug.Log("Cannot represent the zero vector");
             }
             else {
                 //Make a vector object to represent the vector being made
-                allVectors[i] = new VectorClass(xComp, yComp, zComp);
+                VectorClass.allVectors[VectorClass.totVectors] = new VectorClass(xComp, yComp, zComp);
 
                 //Instantiate the stored model into the scene, and store a copy of it in an array
-                allModels[i] = (GameObject)Instantiate(vectorModel, position, Quaternion.Euler(findEuler(allVectors[i])));
+                VectorClass.allModels[VectorClass.totVectors] = (GameObject)Instantiate(vectorModel, position, Quaternion.Euler(findEuler(VectorClass.allVectors[VectorClass.totVectors])));
 
                 //Rename a vector once it is created
-                allModels[i].name = "Vector [" + i + "]";
+                VectorClass.allModels[VectorClass.totVectors].name = "Vector [" + VectorClass.totVectors + "]";
 
                 //Modify the vector scale, along its forward axis, based on the vector magnitude
-                allModels[i].transform.localScale = new Vector3(1f, 1f, allVectors[i].magnify());
+                VectorClass.allModels[VectorClass.totVectors].transform.localScale = new Vector3(1f, 1f, VectorClass.allVectors[VectorClass.totVectors].magnify());
 
-                i++;
+                VectorClass.totVectors++;
+
+                //sort();
             }
         }else {//If there are more than 12 vectors...
             Debug.Log("Don't go too crazy with the vectors!");
@@ -87,9 +86,6 @@ public class makeGraphic : MonoBehaviour {
         int hAngleMod = 0;
         int vAnglMod = 1;
         int fwdOrBwd = 1;
-
-        //The vector that has been projected onto the x axis
-        Debug.Log(projXYonIHat.getVectComp()[0] + ", " + projXYonIHat.getVectComp()[1] + ", " + projXYonIHat.getVectComp()[2]);
 
         //Create offsets so that the Euler angles used to rotate vectors model vectors in a cartesian space
         if(xComp < 0 && yComp >= 0) {
@@ -115,17 +111,37 @@ public class makeGraphic : MonoBehaviour {
             vAnglMod = 1;
         }
 
-        Debug.Log( projXYonIHat.getMagni()+ " , " +vectXY.getMagni());
         //Find the angle along the horizontal plane
         float angleXY = hAngleMod + fwdOrBwd * Mathf.Rad2Deg * Mathf.Acos(projXYonIHat.getMagni() / vectXY.getMagni());
         //Get the angle up from the vertical
         float angleZ = vAnglMod * Mathf.Rad2Deg * Mathf.Acos( vectXY.getMagni() / vector.getMagni());
-        
-        Debug.Log(angleXY + ", " + angleZ);
         
         //Account for euler angle direction or rotation
         Vector3 eulerRotComp = new Vector3(-angleZ, angleXY, 0f);
 
         return eulerRotComp;
     }
+
+    ////Fix
+    //void sort() {
+    //    VectorClass value = new VectorClass(0,0,0);
+    //    bool swap = true;
+
+    //    while (swap == true) {
+    //        swap = false;
+    //        for (int i = 0; i < VectorClass.totVectors; i++) {
+    //            if (VectorClass.totVectors > 1) {
+    //                    if (VectorClass.allVectors[i].getMagni() > VectorClass.allVectors[i + 1].getMagni()) {
+    //                        value = VectorClass.allVectors[i];
+    //                        VectorClass.allVectors[i] = VectorClass.allVectors[i + 1];
+    //                        VectorClass.allVectors[i + 1] = value;
+    //                        swap = true;
+    //                    }
+    //            }
+    //        }
+    //    }
+    //    for (int j = 0; j < VectorClass.totVectors; j++) {
+    //        Debug.Log("Magnitude for vector [" + j + "] " + VectorClass.allVectors[j].getMagni());
+    //    }
+    //}
 }

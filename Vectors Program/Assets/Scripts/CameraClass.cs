@@ -19,7 +19,9 @@ public class CameraClass : MonoBehaviour {
     //A scalar that controls how fast the camera moves.
     private float speed = 150f;
     //How much the radius is changing.
-    private Vector3 deltaRadius;
+    private static Vector3 deltaRadius;
+
+    public static float radiusMag;
 
     //Variables to limit / affect scrolling
     //used to modify scrolling speed based on distance
@@ -28,16 +30,21 @@ public class CameraClass : MonoBehaviour {
     private float dispMag3D;
     //Maximum zoom ~ measured along the XY plane
     private float lowBound = 5f;
+    private float highBound = 300f;
 
-    //Getters and Setters (unimplemented)
-    //public float getRadius() {
-    //    return deltaRadius;
-    //}
-    //public void setRadius(float rad) {
-    //    deltaRadius = rad;
-    //}
+    public static float getDeltaRadius() {
+        return deltaRadius.magnitude;
+    }
 
-    //Other methods
+    /*
+        Moves the camera based on user input
+        Pre: the user uses the mouse to perform an action
+        Post: the action is performed based on the input
+
+        left mouse: rotate around origin
+        right mouse: raise/ lower view point
+        scroll: zoom in and out
+    */
     public void turn() {
 
         //Positive if scrolling forward. Negative if scrolling backward. As scrolling speed increases, the influence moves farther from 0.
@@ -77,7 +84,7 @@ public class CameraClass : MonoBehaviour {
                 deltaRadius = scrollInfluence * Time.deltaTime * speed * cam.forward;
 
                 //Multiply the camera speed by the distance if it is close, or moving closer from farther away
-                if(dispMag3D < 100f || (dispMag3D >= 100f && scrollInfluence > 0f)) {
+                if(dispMag3D < highBound || (dispMag3D >= highBound && scrollInfluence > 0f)) {
                     deltaRadius *= dispMag3D;
                 }
 
@@ -107,6 +114,7 @@ public class CameraClass : MonoBehaviour {
         cam.transform.LookAt(anchor);
     }
     private void Update() {//Call every frame, to update the scene
+        radiusMag = cam.position.magnitude;
         turn();
     }
 }

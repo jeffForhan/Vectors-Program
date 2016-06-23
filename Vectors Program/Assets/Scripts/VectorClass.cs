@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-//Split into an inheritence tree for generic vectors that branch into 3D, 2D, and 4D
+//**Split into an inheritence tree for generic vectors that branch into 3D, 2D, and 4D
 public class VectorClass {
 
     //Number of times vectors have been created
@@ -12,16 +12,18 @@ public class VectorClass {
 
     //The model, colliders etc. that the vector representation holds
     public GameObject vectorObj;
+    //Used to change radial distance of vectors
+    private float radMultiplier = 1f;
 
-    //Position on a plane
-    private Transform pos2D;
     //Position in space
     private Transform pos3D;
 
     //Array holding the vector components
     private float[] components;
     //Holds the vector's magnitude
-    private float magni;
+    private float magnitude;
+
+    private char type = 'p';
 
     //For 3d
     /// <summary>
@@ -41,8 +43,28 @@ public class VectorClass {
         components[2] = z;
 
         //Find the magnitude of the vector. Store this value.
-        magni = magnify();
+        magnitude = magnify();
+    }
 
+    /*
+        Constructor:
+        Used for the creation of new vectors. Specifying that is is either a cross or it is not
+        Pre: A vector is added by the user
+        Post: A new vector object is created
+    */
+    public VectorClass(float x, float y, float z, char _type) {
+
+        //Add vector components to an array
+        components = new float[3];
+        components[0] = x;
+        components[1] = y;
+        components[2] = z;
+
+        //Find the magnitude of the vector. Store this value.
+        magnitude = magnify();
+
+        //Determines if this should be noted as a position, displacement, cross, or sum vector
+        type = _type;
     }
 
     //For 3d #2
@@ -64,24 +86,41 @@ public class VectorClass {
         components[2] = z;
 
         //Find the magnitude of the vector. Store this value.
-        magni = magnify();
+        magnitude = magnify();
 
     }
 
-    //Gets the vector components
-    public float[] getVectComp() {
+    /*
+        Pre: components are required for the calculation
+        Post: return a float array holding the components
+    */
+    public float[] getComponents() {
         return components;
     }
 
-    //Resets the vector components
-    public void setVectComp(float x, float y, float z) {
+    /*
+        Resets vector components being held
+        Pre: User resets the vector components
+        Post: Change the stored components, and changes the magnitude of the vector
+    */
+    public void setComponents(float x, float y, float z) {
         components[0] = x;
         components[1] = y;
         components[2] = z;
+        magnitude = magnify();
     }
 
-    public float getMagni() {
-        return magni;
+    /*
+        Returns the magnitude of a vector
+        Pre:
+        Post:
+    */
+    public float getMagnitude() {
+        return magnitude;
+    }
+
+    public char getType() {
+        return type;
     }
 
     //Gets the magnitude of the vector(DONE)
@@ -124,15 +163,35 @@ public class VectorClass {
     //    return dotVal;
     //}
 
-    //algebreic cross (DONE IN JAVA --- TRANSLATE)
-    public int[] cross(VectorClass v1, VectorClass v2) {
-        return null;
-    }
-    ////geometric cross
-    //public int[] cross(float magA, float magB, float theta) {
-    //    return null;
-    //}
+    //Written by Emily and Amelia
+    //Translated to C Sharp from Java by Jeffrey
+    //Changed return type to float array from string
+    //Changed doubles to floats to work with the rest of the program
+    //The rest was conserved
+    public float[] crossProduct(float x0, float y0, float z0, float x1, float y1, float z1) {
+        float x = 0, y = 0, z = 0;
 
+        x = (y0 * z1) - (y1 * z0);
+        y = (z0 * x1) - (z1 * x0);
+        z = (x0 * y1) - (x1 * y0);
+
+        float[] coordinates = new float[3];
+
+        coordinates[0] = x;
+        coordinates[1] = y;
+        coordinates[2] = z;
+
+        return (coordinates);
+
+
+    }
+    /*
+        Creates a projection of a vector onto another (like a shadow of one on the other)
+        Pre: The user presses the projection button, or a vector's rotation is being defined
+        Post: Evaluate the projection formula
+
+        Proj_a_on_b = [(a dot b) / (b dot b)] * 
+    */
     public VectorClass projection(VectorClass vA, VectorClass vB) {
 
         float scalarMulti = vA.dot(vB) / vB.dot(vB);
@@ -142,8 +201,52 @@ public class VectorClass {
         projAonB.components[1] *= scalarMulti;
         projAonB.components[2] *= scalarMulti;
 
-        projAonB.magni = projAonB.magnify();
+        projAonB.magnitude = projAonB.magnify();
 
         return projAonB;
     }
+
+    /*
+    Pre: Frame is updated
+    Post: Scale of vector is changed based on view distance
+*/
+    public static void scaleWithDistance() {
+
+        //When vectors are very far away, make them larger. When they are close make them bigger
+        for (int i = 0; i < totVectors; i++) {
+            if (CameraClass.radiusMag >= 200f && allVectors[i].getMagnitude() >= 50f) {
+                allVectors[i].radMultiplier = 7f;
+            }
+            else if (CameraClass.radiusMag >= 50f) {
+                allVectors[i].radMultiplier = 1.5f;
+            }
+            else {
+                allVectors[i].radMultiplier = 1f;
+            }
+            allModels[i].transform.localScale = new Vector3(allVectors[i].radMultiplier, allVectors[i].radMultiplier, allVectors[i].getMagnitude());
+        }
+    }
+
+    ////Fix
+    //void sort() {
+    //    VectorClass value = new VectorClass(0,0,0);
+    //    bool swap = true;
+
+    //    while (swap == true) {
+    //        swap = false;
+    //        for (int i = 0; i < VectorClass.totVectors; i++) {
+    //            if (VectorClass.totVectors > 1) {
+    //                    if (VectorClass.allVectors[i].getMagni() > VectorClass.allVectors[i + 1].getMagni()) {
+    //                        value = VectorClass.allVectors[i];
+    //                        VectorClass.allVectors[i] = VectorClass.allVectors[i + 1];
+    //                        VectorClass.allVectors[i + 1] = value;
+    //                        swap = true;
+    //                    }
+    //            }
+    //        }
+    //    }
+    //    for (int j = 0; j < VectorClass.totVectors; j++) {
+    //        Debug.Log("Magnitude for vector [" + j + "] " + VectorClass.allVectors[j].getMagni());
+    //    }
+    //}
 }

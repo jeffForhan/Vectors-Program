@@ -114,6 +114,7 @@ public class CameraClass : MonoBehaviour {
         cam.transform.LookAt(anchor);
     }
     private void Update() {//Call every frame, to update the scene
+        //Get the radial distance of the camera from the origin
         radiusMag = cam.position.magnitude;
         turn();
     }

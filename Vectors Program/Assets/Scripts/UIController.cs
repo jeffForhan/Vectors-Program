@@ -254,10 +254,10 @@ public class UIController : MonoBehaviour {
     #region VECTOR_CREATION
 
     /*
-    Make a vector from scratch
-    Pre: User presses the make vector button
-    Post: Component input fields are parsed, their values are stored, and the make vector method is called
-*/
+        Make a vector from scratch
+        Pre: User presses the make vector button
+        Post: Component input fields are parsed, their values are stored, and the make vector method is called
+    */
     public void parseComponents() {
 
         //Get the input vector components from the text fields
@@ -265,8 +265,6 @@ public class UIController : MonoBehaviour {
             xComp = float.Parse(_xIn.text);
             yComp = float.Parse(_yIn.text);
             zComp = float.Parse(_zIn.text);
-
-            parseDisplacement();
 
             makeNew();
         }
@@ -338,12 +336,17 @@ public class UIController : MonoBehaviour {
 
     //Called by the GUI. When the make vector button is pressed, a vector is made. It's model is stored in one array, and its class is stored in another one.
     public void makeNew() {
-        /*When working with Euler angles, 
+
+        /*
+            When working with Euler angles, 
             Rotations are CLOCKWISE
             x = rotation around x-axis --- changes z component.
             y = rotation around y-axis --- changes x AND y components.
             z will not produce a visible change, in this case
         */
+
+        //check the displacement fields
+        parseDisplacement();
 
         if (VectorClass.totVectors < VectorClass.allModels.Length) {//If there are fewer than 12 vectors
             if (xComp == 0 && yComp == 0 && zComp == 0) {
@@ -486,6 +489,11 @@ public class UIController : MonoBehaviour {
         counter = 0f;
     }
 
+    /*
+        Sends a message to the user
+        Pre: The user interacts with the user
+        Post: A message is displayed for the user. It lasts as duration
+    */
     public void dialogue(string message, float duration) {
         messageDuration = duration;
         dialogueMessage.text = message;

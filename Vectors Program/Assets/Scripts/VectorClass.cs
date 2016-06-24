@@ -4,7 +4,7 @@
 public class VectorClass {
 
     //Number of times vectors have been created
-    public static int totVectors = 0;
+    public static int numVectors = 0;
     //Holds all of the vector object structures
     public static VectorClass[] allVectors = new VectorClass[12];
     //Holds all of the vector 3D models, components, gameobjects, and controlling empties
@@ -16,7 +16,7 @@ public class VectorClass {
     private float radMultiplier = 1f;
 
     //Position in space
-    private Transform pos3D;
+    private Vector3 pos3D;
 
     //Array holding the vector components
     private float[] components;
@@ -24,6 +24,10 @@ public class VectorClass {
     private float magnitude;
 
     private char type = 'p';
+
+    private string name;
+
+    private VectorClass[] parents = new VectorClass[2];
 
     //For 3d
     /// <summary>
@@ -67,18 +71,7 @@ public class VectorClass {
         type = _type;
     }
 
-    //For 3d #2
-    /// <summary>
-    /// Constructor:
-    /// Pre: User has pressed the add vector button in the GUI
-    /// Post: Makes a 3 - dimensional displacement vector, based on x, y, and z components, as well as a displacement from the origin
-    /// </summary>
-    /// <param name="x">X component</param>
-    /// <param name="y">Y component</param>
-    /// <param name="z">Z component</param>
-    /// <param name="disp">The displacement from the origin</param>
-    public VectorClass(int x, int y, int z, Transform disp) {
-
+    public VectorClass(int x, int y, int z, VectorClass parentA, VectorClass parentB, bool _type) {
         //Add vector components to an array
         components = new float[3];
         components[0] = x;
@@ -87,7 +80,6 @@ public class VectorClass {
 
         //Find the magnitude of the vector. Store this value.
         magnitude = magnify();
-
     }
 
     /*
@@ -119,8 +111,39 @@ public class VectorClass {
         return magnitude;
     }
 
-    public char getType() {
+    public char getVectorType() {
         return type;
+    }
+
+    public void setPos3D(Vector3 originOffset) {
+        pos3D = originOffset;
+    }
+
+    public Vector3 getPos3D() {
+        return pos3D;
+    }
+
+    public void setName(string _name) {
+        name = _name;
+    }
+
+    public string getName() {
+        return name;
+    }
+
+    /*
+        Sets the parent vectors of a cross or sum vector
+    */
+    public void setParents (VectorClass p1, VectorClass p2) {
+        parents[0] = p1;
+        parents[1] = p2;
+    }
+    
+    /*
+        Gets the parent vectors of a sum or cross vector
+    */
+    public VectorClass[] getParents() {
+        return parents;
     }
 
     //Gets the magnitude of the vector(DONE)
@@ -154,14 +177,6 @@ public class VectorClass {
         }
         return dotVal;
     }
-    ////geometric dot (DONE)
-    //public float dot(float magA, float magB, float theta) {
-    //    float dotVal = 0;
-
-    //    dotVal = magA * magB * Mathf.Cos(Mathf.Deg2Rad * theta);
-
-    //    return dotVal;
-    //}
 
     //Written by Emily and Amelia
     //Translated to C Sharp from Java by Jeffrey
@@ -213,7 +228,7 @@ public class VectorClass {
     public static void scaleWithDistance() {
 
         //When vectors are very far away, make them larger. When they are close make them bigger
-        for (int i = 0; i < totVectors; i++) {
+        for (int i = 0; i < numVectors; i++) {
             if (CameraClass.radiusMag >= 200f && allVectors[i].getMagnitude() >= 50f) {
                 allVectors[i].radMultiplier = 7f;
             }
@@ -227,7 +242,6 @@ public class VectorClass {
         }
     }
 
-    ////Fix
     //void sort() {
     //    VectorClass value = new VectorClass(0,0,0);
     //    bool swap = true;

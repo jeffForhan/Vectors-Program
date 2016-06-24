@@ -40,6 +40,14 @@ public class UIController : MonoBehaviour {
 
     private float counter;
 
+    //Is the modifier panel open
+    private bool isModOpen = false;
+
+    //reference to the modifer panel gameobject
+    public GameObject modPanleRef;
+
+    private bool loadingVectors;
+
     #endregion GENERAL_VARIABLES
 
     #region GENERAL_INTERACTION
@@ -61,7 +69,7 @@ public class UIController : MonoBehaviour {
         //Array holding the indeces of the vectors found for the user
         int[] vectorPositions = { numA, numB };
 
-        for (int i = 0; i < VectorClass.totVectors; i++) {//Loop for all vectors that are present in the scene
+        for (int i = 0; i < VectorClass.numVectors; i++) {//Loop for all vectors that are present in the scene
 
             if (nameA.Equals(nameB, StringComparison.InvariantCultureIgnoreCase) && nameA.Equals(VectorClass.allModels[i].name, StringComparison.InvariantCultureIgnoreCase)) {//if the names are the same
                 numA = i;
@@ -86,33 +94,6 @@ public class UIController : MonoBehaviour {
         return vectorPositions;
     }
 
-    /*
-        Prints the dot product of two vectors to the screen
-        Pre: User clicks the DOT PRODUCT button
-        Post: The two vectors being operated on are found, dotted, and the result is printed
-    */
-    public void printDot() {
-
-        //Holds array indeces of the vectors being operated on
-        int[] vectorPositions = findVectors(operationInA.text, operationInB.text);
-
-        if (vectorPositions[0] != -1) {//if the first index returned is not -1, then calculated
-
-            //Get the two vectors
-            VectorClass first = VectorClass.allVectors[vectorPositions[0]];
-            VectorClass second = VectorClass.allVectors[vectorPositions[1]];
-
-            //The result of the dot product
-            float dotReturn = first.dot(second);
-
-            //Print to the screen
-            dialogue("Dot Product : " + dotReturn.ToString(), 6f);
-        }
-        else {//Tell the user that one or more vectors can't be found
-            dialogue("Could not find one or more of vectors input.", 6f);
-        }
-    }
-
     //IO METHODS
 
     /*
@@ -133,14 +114,32 @@ public class UIController : MonoBehaviour {
         Post: A writer object stores the current vectors in a .HYDE file
     */
     public void saveBtnPress() {
+
+        //The message being written
+        string toWrite;
+
         if (fileNameIn.text != string.Empty) {//Checks if the user has input a file name
             try {
                 //Links the writer to the file
                 writer = new StreamWriter(fullPath);
                 //Sends all vectors to the .HYDE file. Stores the components in format "x,y,z"
-                for (int i = 0; i < VectorClass.totVectors; i++) {
-                    writer.WriteLine(VectorClass.allVectors[i].getType() + " ( " + VectorClass.allVectors[i].getComponents()[0] + " , " + VectorClass.allVectors[i].getComponents()[1] +
-                    " , " + VectorClass.allVectors[i].getComponents()[2] + " ) ");
+                for (int i = 0; i < VectorClass.numVectors; i++) {
+                    toWrite = VectorClass.allVectors[i].getVectorType() + "(" + VectorClass.allVectors[i].getComponents()[0] + "," + VectorClass.allVectors[i].getComponents()[1] 
+                        + "," + VectorClass.allVectors[i].getComponents()[2] + ")";
+                    
+                        
+                    /*if(VectorClass.allVectors[i].getVectorType() == 'c' || VectorClass.allVectors[i].getVectorType() == 's') {
+                        toWrite += "~" + VectorClass.allVectors[i].getParents()[0].getName() + "," + VectorClass.allVectors[i].getParents()[1].getName() + ",";
+                    }
+                    else 
+                    
+                    */
+                    
+                    if(VectorClass.allVectors[i].getVectorType() == 'd') {
+                        //Switch from left hand to right hand system by switching y and z components
+                        toWrite += "~" + "(" + VectorClass.allVectors[i].getPos3D().x + "," + VectorClass.allVectors[i].getPos3D().z + "," + VectorClass.allVectors[i].getPos3D().y + ")";
+                    }
+                    writer.WriteLine(toWrite);
                 }
                 dialogue("Saved vector components");
 
@@ -191,29 +190,299 @@ public class UIController : MonoBehaviour {
                 dialogue("Error : Difficulty reading file : " + e.Message, 8f);
             }
 
-            //A string holding all of the vectors that have been created
-            string list = "";
-            //Print out
-            while (storedVectors[rep2] != null) {//Add all of the stored vectors to a string ****error when at max capacity
-                if (rep2 == 0) {
-                    //Add to a string that holds the created vectors. Used to start the list.
-                    list += "Created Vectors : " + storedVectors[rep2];
-                }
-                else {
-                    //Used to add to the list.
-                    list += " , " + storedVectors[rep2];
-                }
+            ////A string holding all of the vectors that have been created
+            //string list = "";
+            ////Print out
+            //while (storedVectors[rep2] != null) {//Add all of the stored vectors to a string ****error when at max capacity
+            //    if (rep2 == 0) {
+            //        //Add to a string that holds the created vectors. Used to start the list.
+            //        list += "Created Vectors : " + storedVectors[rep2];
+            //    }
+            //    else {
+            //        //Used to add to the list.
+            //        list += " , " + storedVectors[rep2];
+            //    }
 
-                rep2++;
-            }
-            //Print out the list to the screen
-            dialogue(list, 6f);
+            //    rep2++;
+            //}
+            ////Print out the list to the screen
+            //dialogue(list, 6f);
+
+            //Process the strings
+            process();
         }
         else {//Tell the user if there is not file specified, or the file does not exist.
             dialogue("No file to read from.");
         }
     }
 
+    //HAODA'S THING
+    /**
+     * Processes the strings in storedVectors[], and creates graphic vector and code vector classes from them
+     * pre: string[] storedVectors
+     * post: new vector objects
+    **/
+    public void process() {
+
+        //Say that vectors are running to over-rule resetting displacements
+        loadingVectors = true;
+
+        //Clear current vectors
+        while (VectorClass.numVectors > 0) {
+            removeLastVector();
+        }
+
+        for (int i = 0; i < 12; i++) {
+            string currentVector = storedVectors[i]/*.Replace(" ", "")*/;
+
+            if (currentVector == null) //If there's no vector saved ... 
+            {
+                i = 12; //Ends the loop
+            }
+            else {
+                char type; //The type of vector
+                /*Vector file layout: 
+                Position vector: "p(1,2,3) "
+                Displacement vector: "d(1,2,3)-(4,5,6)
+                Sum vector: "s(1,2,3)-V1,V2."
+                Cross product: "c(1,2,3)-V1,V2." 
+                */
+                type = currentVector[0];
+                if (type == 'p') //POSITION VECTOR
+                {
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strComp1 = "";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strComp1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp2 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strComp2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp3 ="";
+                    while (currentVector[index] != ')') {
+                        //Adds digits until a bracket
+                        strComp3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compy1 = float.Parse(strComp1);
+                    float compy2 = float.Parse(strComp2);
+                    float compy3 = float.Parse(strComp3);
+                    //Set the vector components
+                    xComp = compy1;
+                    yComp = compy2;
+                    zComp = compy3;
+                    //Make the new vector
+                    displacement = Vector3.zero;
+                    makeNew();
+                }
+                else if (type == 's') //SUM VECTOR
+                {
+
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strComp1 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strComp1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp2 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strComp2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp3 = "";
+                    while (currentVector[index] != ')') {
+                        //Adds digits until a bracket
+                        strComp3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compy1 = float.Parse(strComp1);
+                    float compy2 = float.Parse(strComp2);
+                    float compy3 = float.Parse(strComp3);
+
+
+                    //To get parent names... 
+
+                    index++;
+
+                    string parentName1 ="";
+                    while (currentVector[index] != ',') {
+                        parentName1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string parentName2 = "";
+                    while (currentVector[index] != ',') {
+                        parentName2 += currentVector[index];
+                        index++;
+                    }
+                    //CREATE NEW SUM VECTOR HERE
+                    displacement = Vector3.zero;
+                    makeNew();
+                }
+                else if (type == 'c') //CROSS PRODUCT VECTOR
+                {
+
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strComp1 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strComp1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp2 = "";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strComp2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp3 ="";
+                    while (currentVector[index] != ')') {
+                        //Adds digits until a bracket
+                        strComp3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compy1 = float.Parse(strComp1);
+                    float compy2 = float.Parse(strComp2);
+                    float compy3 = float.Parse(strComp3);
+
+
+                    //To get parent names... 
+
+                    index++;
+
+                    string parentName1 ="";
+                    while (currentVector[index] != ',') {
+                        parentName1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string parentName2 = "";
+                    while (currentVector[index] != ',') {
+                        parentName2 += currentVector[index];
+                        index++;
+                    }
+                    //CREATE NEW CROSS PRODUCT VECTOR HERE
+                    displacement = Vector3.zero;
+                    makeNew();
+                }
+                else if (type == 'd') //DISPLACEMENT VECTOR
+                {
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strCompA1 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strCompA1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompA2 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strCompA2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompA3 ="";
+                    while (currentVector[index] != ')') {
+                        //Adds digits until a bracket
+                        strCompA3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compyA1 = float.Parse(strCompA1);
+                    float compyA2 = float.Parse(strCompA2);
+                    float compyA3 = float.Parse(strCompA3);
+                    //End position
+
+                    //advances by three spaces
+                    index++;
+                    index++;
+                    //New
+                    index++;
+
+                    string strCompB1 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strCompB1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompB2 ="";
+                    while (currentVector[index] != ',') {
+                        //Adds digits until a comma
+                        strCompB2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompB3 = "";
+                    while (currentVector[index] != ')') {
+                        //Adds digits until a bracket
+                        strCompB3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compyB1 = float.Parse(strCompB1);
+                    float compyB2 = float.Parse(strCompB2);
+                    float compyB3 = float.Parse(strCompB3);
+                    //Set components for the next vector to be made
+                    xComp = compyA1;
+                    yComp = compyA2;
+                    zComp = compyA3;
+                    //z and y displacements are switched to account for unity being a left handed system
+                    displacement.Set(compyB1, compyB3, compyB2);
+                    makeNew();
+                }
+            }
+            Debug.Log(loadingVectors);
+        }
+        loadingVectors = false;
+    }
+
+    /*
+        If the modifier panel is active and the button is pressed, hide it. if not, show it
+    */
+    public void toggleModPanel() {
+        if(isModOpen) {
+            modPanleRef.SetActive(false);
+            isModOpen = false;
+        }
+        else {
+            modPanleRef.SetActive(true);
+            isModOpen = true;
+        }
+    }
     #endregion GENERAL_INTERACTION
 
     #region VECTOR_VARAIABLES
@@ -280,14 +549,17 @@ public class UIController : MonoBehaviour {
         Post: Makes a vector that has been displaced from the origin
     */
     public void parseDisplacement() {
-        if(xDispIn.text != string.Empty && yDispIn.text != string.Empty && zDispIn.text != string.Empty) {
+        if (xDispIn.text != string.Empty && yDispIn.text != string.Empty && zDispIn.text != string.Empty) {
             try {
                 //Get displacement components
                 displacement.x = float.Parse(xDispIn.text);
-                displacement.y = float.Parse(yDispIn.text);
-                displacement.z = float.Parse(zDispIn.text);
+                //Switch y and z to switch from unity's left handed system to a right handed system
+                displacement.y = float.Parse(zDispIn.text);
+                displacement.z = float.Parse(yDispIn.text);
+
+                typeToMake = 'd';
             }
-            catch(FormatException) {
+            catch (FormatException) {
                 dialogue("Invalid Componenets : Displacement. All components must be elements of the real numbers.", 8f);
             }
         }
@@ -307,7 +579,7 @@ public class UIController : MonoBehaviour {
         Pre: User fills the name fields, and presses the cross button
         Post: A new vector is made using the components recwived from the cross product
     */
-    public void examineCrossFields() {//WORKS BUT DOES NOT LIKE 2D VECTORS, OR WHEN INPUTS ARE THE SAME
+    public void examineCrossFields() {
 
         int[] vectorPosInList = findVectors(operationInA.text, operationInB.text);
         float[] crossComp = new float[2];
@@ -324,13 +596,79 @@ public class UIController : MonoBehaviour {
             zComp = crossComp[2];
 
             //Set the components of the next vector to be made
-            typeToMake = 'c';
+            //typeToMake = 'c';
+
+            typeToMake = 'p';
 
             //Make a vector using the cross product components
-            makeNew();
+            makeNew(first,second);
         }
         else {
             dialogue("One or more incorrect vector names. Cannot cross.", 6f);
+        }
+    }
+
+    /*
+        Adds 2 vectors and makes a new one out of them
+        Pre: User presses add vectors button
+        Post: New sum vector is made
+    */
+    public void examineSumFields() {
+
+        int[] vectorPosInList = findVectors(operationInA.text, operationInB.text);
+
+        if (vectorPosInList[0] != -1) {//Check if the search went through
+
+            VectorClass first = VectorClass.allVectors[vectorPosInList[0]];
+            VectorClass second = VectorClass.allVectors[vectorPosInList[1]];
+
+            xComp = first.getComponents()[0] + second.getComponents()[0];
+            yComp = first.getComponents()[1] + second.getComponents()[1];
+            zComp = first.getComponents()[2] + second.getComponents()[2];
+
+            Debug.Log(xComp + " " + yComp + " " + zComp);
+
+            //Set the components of the next vector to be made
+            //typeToMake = 's';
+
+            typeToMake = 'p';
+
+            //Make a vector using the cross product components
+            makeNew(first, second);
+        }
+        else {
+            dialogue("One or more incorrect vector names. Cannot cross.", 6f);
+        }
+    }
+
+    /*
+    Prints the dot product of two vectors to the screen
+    Pre: User clicks the DOT PRODUCT button
+    Post: The two vectors being operated on are found, dotted, and the result is printed
+*/
+    public void printDot() {
+
+        //Holds array indeces of the vectors being operated on
+        int[] vectorPositions = findVectors(operationInA.text, operationInB.text);
+
+        if (vectorPositions[0] != -1) {//if the first index returned is not -1, then calculated
+
+            //Get the two vectors
+            VectorClass first = VectorClass.allVectors[vectorPositions[0]];
+            VectorClass second = VectorClass.allVectors[vectorPositions[1]];
+
+            //The result of the dot product
+            float dotReturn = first.dot(second);
+
+            //Strings that hold components of the vectors being dotted
+            string firstComps = " ( " + first.getComponents()[0] + " , " + first.getComponents()[1] + " , " + first.getComponents()[2] + " )";
+            string secondComps = " ( " + second.getComponents()[0] + " , " + second.getComponents()[1] + " , " + second.getComponents()[2] + " )";
+
+            //Print to the screen
+            dialogue("Dot Product of " + firstComps + " and " + secondComps + " = " + dotReturn.ToString(), 6f);
+        }
+        else {//Tell the user that one or more vectors can't be found
+            dialogue("Could not find one or more of vectors input.", 6f);
         }
     }
 
@@ -345,30 +683,99 @@ public class UIController : MonoBehaviour {
             z will not produce a visible change, in this case
         */
 
-        //check the displacement fields
-        parseDisplacement();
+        if (!loadingVectors) {//If not loading vectors, check displacement fields
+            //check the displacement fields
+            parseDisplacement();
+        }
 
-        if (VectorClass.totVectors < VectorClass.allModels.Length) {//If there are fewer than 12 vectors
+        if (VectorClass.numVectors < VectorClass.allModels.Length) {//If there are fewer than 12 vectors
             if (xComp == 0 && yComp == 0 && zComp == 0) {
                 dialogue("Cannot represent the zero vector");
             }
             else {
+
+                //Print everything out to see what's going on
+                Debug.Log(xComp + " " + yComp + " " + zComp);
+
                 //Make a vector object to represent the vector being made
-                VectorClass.allVectors[VectorClass.totVectors] = new VectorClass(xComp, yComp, zComp, typeToMake);
+                VectorClass.allVectors[VectorClass.numVectors] = new VectorClass(xComp, yComp, zComp, typeToMake);
+
+
+                if (typeToMake == 'd') {
+                    //Store displacement
+                    VectorClass.allVectors[VectorClass.numVectors].setPos3D(displacement);
+                }
 
                 //Instantiate the stored model into the scene, and store a copy of it in an array
-                VectorClass.allModels[VectorClass.totVectors] = (GameObject)Instantiate(vectorModel, displacement, Quaternion.Euler(findEuler(VectorClass.allVectors[VectorClass.totVectors])));
+                VectorClass.allModels[VectorClass.numVectors] = (GameObject)Instantiate(vectorModel, displacement, Quaternion.Euler(findEuler(VectorClass.allVectors[VectorClass.numVectors])));
 
-                //Rename a vector once it is created
-                VectorClass.allModels[VectorClass.totVectors].name = "V" + (VectorClass.totVectors);
+                //Rename a vector model once it is created
+                VectorClass.allModels[VectorClass.numVectors].name = "V" + (VectorClass.numVectors);
+                VectorClass.allVectors[VectorClass.numVectors].setName("V" + (VectorClass.numVectors));
 
                 //Modify the vector scale, along its forward axis, based on the vector magnitude
-                VectorClass.allModels[VectorClass.totVectors].transform.localScale = new Vector3(1f, 1f, VectorClass.allVectors[VectorClass.totVectors].magnify());
+                VectorClass.allModels[VectorClass.numVectors].transform.localScale = new Vector3(1f, 1f, VectorClass.allVectors[VectorClass.numVectors].magnify());
 
-                dialogue("Made new vector : " + VectorClass.allModels[VectorClass.totVectors], 10f);
+                dialogue("Made new vector : " + VectorClass.allVectors[VectorClass.numVectors].getName(), 10f);
 
-                //ERROR WITH LINE WHEN AT MAX CAPACITY
-                VectorClass.totVectors++;
+                //Increment the number of vectors in the scene
+                VectorClass.numVectors++;
+            }
+        }
+        else {//If there are more than 12 vectors...
+            dialogue("Scene is full");
+
+        }
+    }
+
+    //Called by the GUI. When the make vector button is pressed, a vector is made. It's model is stored in one array, and its class is stored in another one.
+    //Overload: Used to set up parenting between vectors - when these parents are modified so are their children
+    public void makeNew(VectorClass parentA, VectorClass parentB) {
+
+        /*
+            When working with Euler angles, 
+            Rotations are CLOCKWISE
+            x = rotation around x-axis --- changes z component.
+            y = rotation around y-axis --- changes x AND y components.
+            z will not produce a visible change, in this case
+        */
+
+        if (!loadingVectors) {//If not loading vectors, check displacement fields
+            //check the displacement fields
+            parseDisplacement();
+        }
+
+        if (VectorClass.numVectors < VectorClass.allModels.Length) {//If there are fewer than 12 vectors
+            if (xComp == 0 && yComp == 0 && zComp == 0) {
+                dialogue("Cannot represent the zero vector");
+            }
+            else {
+
+                Debug.Log(xComp + " " + yComp + " " + zComp);
+
+                //Make a vector object to represent the vector being made
+                VectorClass.allVectors[VectorClass.numVectors] = new VectorClass(xComp, yComp, zComp, typeToMake);
+
+                VectorClass.allVectors[VectorClass.numVectors].setPos3D(displacement);
+
+                //Instantiate the stored model into the scene, and store a copy of it in an array
+                VectorClass.allModels[VectorClass.numVectors] = (GameObject)Instantiate(vectorModel, displacement, Quaternion.Euler(findEuler(VectorClass.allVectors[VectorClass.numVectors])));
+
+                //Rename a vector model once it is created
+                VectorClass.allModels[VectorClass.numVectors].name = "V" + (VectorClass.numVectors);
+                VectorClass.allVectors[VectorClass.numVectors].setName("V" + (VectorClass.numVectors));
+
+                //Modify the vector scale, along its forward axis, based on the vector magnitude
+                VectorClass.allModels[VectorClass.numVectors].transform.localScale = new Vector3(1f, 1f, VectorClass.allVectors[VectorClass.numVectors].magnify());
+
+
+                //Parenting
+                VectorClass.allVectors[VectorClass.numVectors].setParents(parentA, parentB);
+
+                dialogue("Made new vector : " + VectorClass.allVectors[VectorClass.numVectors].getName(), 10f);
+
+                //Increment the number of vectors in the scene
+                VectorClass.numVectors++;
             }
         }
         else {//If there are more than 12 vectors...
@@ -435,6 +842,25 @@ public class UIController : MonoBehaviour {
         Vector3 eulerRotComp = new Vector3(-angleZ, angleXY, 0f);
 
         return eulerRotComp;
+    }
+
+    /*
+        Removes the vector that was most recently made
+        Pre: User presses the remove vector button
+        Post: Last vector model is destroyed, and its object is set to null. The vector counter is decrimented.
+    */
+    public void removeLastVector() {
+        if (VectorClass.numVectors > 0) {
+            //decrement vector count
+            VectorClass.numVectors--;
+            //Remove object
+            VectorClass.allVectors[VectorClass.numVectors] = null;
+            //Remove the model from the scene
+            Destroy(VectorClass.allModels[VectorClass.numVectors]);
+        }
+        else {
+            dialogue("There is no vector to remove.");
+        }
     }
 
     #endregion VECTOR_CREATION

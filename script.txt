@@ -1,0 +1,263 @@
+/**
+     * Processes the strings in storedVectors[], and creates graphic vector and code vector classes from them
+     * pre: string[] storedVectors
+     * post: new vector objects
+    **/
+    public void process() {
+        loadingVectors = true;
+        
+        //Clear current vectors
+        while(VectorClass.numVectors > 0) {
+            removeLastVector();
+        }
+        for (int i = 0; i < 12; i++) {
+            string currentVector = storedVectors[i].Replace(" ", "");
+            if (currentVector == null) //If there's no vector saved ... 
+            {
+                i = 12; //Ends the loop
+            }
+            else {
+                char type; //The type of vector
+                /*Vector file layout: 
+                Position vector: "p(1,2,3) "
+                Displacement vector: "d(1,2,3)-(4,5,6)
+                Sum vector: "s(1,2,3)-V1,V2."
+                Cross product: "c(1,2,3)-V1,V2." 
+                */
+                type = currentVector[0];
+                if (type == 'p') //POSITION VECTOR
+                {
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strComp1; 
+                    while (currentVector[index] != ',') 
+                    {
+                        //Adds digits until a comma
+                        strComp1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp2;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strComp2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp3; 
+                    while (currentVector[index] != ')')
+                    {
+                        //Adds digits until a bracket
+                        strComp3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compy1 = float.Parse(strComp1);
+                    float compy2 = float.Parse(strComp2);
+                    float compy3 = float.Parse(strComp3);
+                    //Set the vector components
+                    xComp = compy1;
+                    yComp = compy2;
+                    zComp = compy3;
+                    //Make the new vector
+                    makeNew();
+                }
+                else if (type == 's') //SUM VECTOR
+                {
+
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strComp1;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strComp1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp2;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strComp2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp3;
+                    while (currentVector[index] != ')')
+                    {
+                        //Adds digits until a bracket
+                        strComp3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compy1 = float.Parse(strComp1);
+                    float compy2 = float.Parse(strComp2);
+                    float compy3 = float.Parse(strComp3);
+
+
+                    //To get parent names... 
+
+                    index ++;
+
+                    string parentName1;
+                    while (currentVector[index] != ',')
+                    {
+                        parentName1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string parentName2 = currentVector.Substring(12, 13);
+                    while (currentVector[index] != ',')
+                    {
+                        parentName2 += currentVector[index];
+                        index++;
+                    }
+                    //CREATE NEW SUM VECTOR HERE
+                    displacement = Vector3.zero;
+                    makeNew();
+                }
+                else if (type == 'c') //CROSS PRODUCT VECTOR
+                {
+
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strComp1;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strComp1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp2;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strComp2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strComp3;
+                    while (currentVector[index] != ')')
+                    {
+                        //Adds digits until a bracket
+                        strComp3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compy1 = float.Parse(strComp1);
+                    float compy2 = float.Parse(strComp2);
+                    float compy3 = float.Parse(strComp3);
+
+
+                    //To get parent names... 
+
+                    index++;
+
+                    string parentName1;
+                    while (currentVector[index] != ',')
+                    {
+                        parentName1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string parentName2 = currentVector.Substring(12, 13);
+                    while (currentVector[index] != ',')
+                    {
+                        parentName2 += currentVector[index];
+                        index++;
+                    }
+                    //CREATE NEW CROSS PRODUCT VECTOR HERE
+                    displacement = Vector3.zero;
+                    makeNew();
+                }
+                else if (type == 'd') //DISPLACEMENT VECTOR
+                {
+                    int index = 2; //Sets the current 'reading index'
+
+                    string strCompA1;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strCompA1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompA2;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strCompA2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompA3;
+                    while (currentVector[index] != ')')
+                    {
+                        //Adds digits until a bracket
+                        strCompA3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compyA1 = float.Parse(strCompA1);
+                    float compyA2 = float.Parse(strCompA2);
+                    float compyA3 = float.Parse(strCompA3);
+                    //End position
+
+                    //advances by two spaces
+                    index++;
+                    index++;
+
+                    string strCompB1;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strCompB1 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompB2;
+                    while (currentVector[index] != ',')
+                    {
+                        //Adds digits until a comma
+                        strCompB2 += currentVector[index];
+                        index++;
+                    }
+
+                    index++;
+                    string strCompB3;
+                    while (currentVector[index] != ')')
+                    {
+                        //Adds digits until a bracket
+                        strCompB3 += currentVector[index];
+                        index++;
+                    }
+
+                    float compyB1 = float.Parse(strCompB1);
+                    float compyB2 = float.Parse(strCompB2);
+                    float compyB3 = float.Parse(strCompB3);
+                    //Set components for the next vector to be made
+                    xComp = compyA1;
+                    yComp = compyA2;
+                    zComp = compyA3;
+                    //z and y displacements are switched to account for unity being a left handed system
+                    displacement = new Vector3(compyB1, compyB3, compyB2);
+                    makeNew();
+                }
+            }
+        }
+        loadingVectors = false;
+    }
